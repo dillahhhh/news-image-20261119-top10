@@ -120,7 +120,11 @@ def draw_flag_us(d, x, y):
 
 def draw_flag_cn(d, x, y):
     d.rectangle([x, y, x + 110, y + 70], fill=RED)
-    d.polygon(star_points(x + 35, y + 35, 20, 8), fill=YELLOW)
+    # one large star + four small stars in an arc (China, not Vietnam)
+    d.polygon(star_points(x + 35, y + 35, 10.5, 4.2), fill=YELLOW)
+    for sx, sy in ((x + 70, y + 14), (x + 84, y + 28), (x + 84, y + 49),
+                   (x + 70, y + 63)):
+        d.polygon(star_points(sx, sy, 3.5, 1.4), fill=YELLOW)
     d.rectangle([x, y, x + 110, y + 70], outline=INK, width=2)
 
 
@@ -217,12 +221,12 @@ def draw_right_cards(d):
     for ln in lines:
         d.text((683, y), ln, font=f, fill=INK, anchor="la")
         y += 34
-    big_f = font(COND_BOLD, 54)
-    d.text((683, 412), "$81.3B", font=big_f, fill=INK, anchor="la")
+    big_f, _ = fit_single(COND_BOLD, "$81.3B IPO", 312, 54, 40)
+    d.text((683, 412), "$81.3B IPO", font=big_f, fill=INK, anchor="la")
     # green up arrow (drawn triangle) + ANT $83
-    d.polygon([(683, 500), (695, 482), (707, 500)], fill=GREEN)
+    d.polygon([(683, 494), (695, 476), (707, 494)], fill=GREEN)
     sub_f = font(COND_BOLD, 24)
-    d.text((714, 478), "ANT $83", font=sub_f, fill=GREEN, anchor="la")
+    d.text((714, 472), "ANT $83", font=sub_f, fill=GREEN, anchor="la")
 
 
 # ---------------------------------------------------------------- mid grid
@@ -279,15 +283,32 @@ def icon_bars(d, ix, iy):
 
 
 MID = [
-    ("MYANMAR GUILTY OF GENOCIDE", "REPORTED", icon_scales, INK),
+    ("WORLD COURT: MYANMAR RESPONSIBLE FOR GENOCIDE", "REPORTED", icon_scales, INK),
     ("IRAN SAYS IT HIT US BASE, KUWAIT", "CLAIM", icon_target, RED),
-    ("AKVAN NEARS INDIA 200,000 EVACUATED", "FORECAST", icon_cyclone, BLUE),
-    ("FLORIDA: 15 IN OF RAIN IN 24 HOURS", "REPORTED", icon_rain, INK),
+    ("CYCLONE AKVAN NEARS INDIA", "FORECAST", icon_cyclone, BLUE),
+    ("FLORIDA: 15 INCHES OF RAIN IN 24 HOURS", "REPORTED", icon_rain, INK),
     ("551,864 SIT THE SUNEUNG EXAM", "REPORTED", icon_exam, INK),
     ("AUSTRALIA JOBLESS RATE HITS 4.9%", "REPORTED", icon_bars, INK),
 ]
 
 TAG_FILL = {"REPORTED": INK, "CLAIM": RED, "FORECAST": BLUE}
+
+
+def _uniform_mid_size():
+    """Largest size in [20..27] where EVERY MID headline wraps to <=3 lines
+    at width 201 (per-headline largest fitting size, then the minimum)."""
+    sizes = []
+    for headline, _, _, _ in MID:
+        s = 20
+        for cand in range(27, 19, -1):
+            if len(wrap_lines(font(COND_BOLD, cand), headline, 201)) <= 3:
+                s = cand
+                break
+        sizes.append(s)
+    return min(sizes)
+
+
+MID_SIZE = _uniform_mid_size()
 
 
 def draw_mid_grid(d):
@@ -300,7 +321,9 @@ def draw_mid_grid(d):
         d.rectangle([x, y, x + 323, y + 152], fill=CREAM, outline=INK, width=2)
         icon_fn(d, x + 14, y + 34)
         tx = x + 110
-        f, lines, size = fit_wrap(COND_BOLD, headline, 201, 27, 20)
+        f = font(COND_BOLD, MID_SIZE)
+        lines = wrap_lines(f, headline, 201)
+        size = MID_SIZE
         leading = size + 6
         block = len(lines) * leading + 8 + 22
         ty = y + (152 - block) // 2
@@ -337,11 +360,11 @@ def draw_strip(d):
     for i, item in enumerate(STRIP):
         x = xs[i % 4]
         y = ys[i // 4]
-        f, lines, _ = fit_wrap(COND_BOLD, item, 239, 22, 18)
+        f, lines, _ = fit_wrap(COND_BOLD, item, 239, 24, 20)
         ty = y
         for ln in lines:
             d.text((x, ty), ln, font=f, fill=INK, anchor="la")
-            ty += 26
+            ty += 28
 
 
 def draw_footer(d):
